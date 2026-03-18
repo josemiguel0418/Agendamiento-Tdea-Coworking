@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TdeA Coworking · Reservas</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="page-wrap">
+<div class="container">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-badge">
+        <span class="brand-name">TdeA</span>
+        <span class="brand-sub">Institución Universitaria</span>
+      </div>
+      <span class="badge badge-green" style="font-size:.7rem">Coworking</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-avatar" id="userInitial">?</div>
+        <span id="nombreUsuario">Cargando…</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- Stats rápidas -->
+  <div class="stats-strip" id="statsStrip" style="display:none">
+    <div class="stat-card">
+      <div class="stat-value" id="statLibres">–</div>
+      <div class="stat-label">Espacios libres ahora</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statOcupados">–</div>
+      <div class="stat-label">Espacios ocupados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statMisReservas">–</div>
+      <div class="stat-label">Mis reservas hoy</div>
+    </div>
+  </div>
+
+  <!-- Controles de fecha / hora -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input class="form-control" type="date" id="fecha" onchange="actualizarMapa()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora de inicio</label>
+          <select class="form-control" id="hora" onchange="actualizarMapa()">
+            <option>08:00</option><option>09:00</option><option>10:00</option>
+            <option>11:00</option><option>12:00</option><option>13:00</option>
+            <option>14:00</option><option>15:00</option><option>16:00</option>
+            <option>17:00</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="actualizarMapa()">Ver disponibilidad</button>
+      </div>
+      <div id="alertaFecha" class="alert alert-warning" style="display:none;margin-top:12px">
+        <span>⚠️</span><span>No puedes reservar en fechas pasadas.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mapa -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <span class="card-title">🗺️ Mapa del Coworking</span>
+      <div class="leyenda" style="margin:0">
+        <div class="leyenda-item"><div class="dot dot-green"></div> Disponible</div>
+        <div class="leyenda-item"><div class="dot dot-red"></div> Ocupado</div>
+        <div class="leyenda-item"><div class="dot dot-slate"></div> Zona común</div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:16px">
+
+      <div class="mapa-coworking">
+
+        <div class="ventanal-trasero">🪟 Ventanal Trasero</div>
+
+        <div class="mapa-body">
+
+          <!-- MURO + PUESTOS P1-P9 -->
+          <div class="col-muro-puestos">
+            <div class="muro-label">MURO</div>
+            <div class="col-puestos">
+              <div class="puesto" id="espacio-9" onclick="reservar(9)"><span class="puesto-num">P9</span><span class="puesto-estado">💻</span></div>
+              <div class="puesto" id="espacio-8" onclick="reservar(8)"><span class="puesto-num">P8</span><span class="puesto-estado">💻</span></div>
+              <div class="puesto" id="espacio-7" onclick="reservar(7)"><span class="puesto-num">P7</span><span class="puesto-estado">💻</span></div>
+              <div class="puesto" id="espacio-6" onclick="reservar(6)"><span class="puesto-num">P6</span><span class="puesto-estado">💻</span></div>
+              <div class="puesto" id="espacio-5" onclick="reservar(5)"><span class="puesto-num">P5</span><span class="puesto-estado">💻</span></div>
+              <div class="puesto" id="espacio-4" onclick="reservar(4)"><span class="puesto-num">P4</span><span class="puesto-estado">💻</span></div>
+              <div class="puesto" id="espacio-3" onclick="reservar(3)"><span class="puesto-num">P3</span><span class="puesto-estado">💻</span></div>
+              <div class="puesto" id="espacio-2" onclick="reservar(2)"><span class="puesto-num">P2</span><span class="puesto-estado">💻</span></div>
+              <div class="puesto" id="espacio-1" onclick="reservar(1)"><span class="puesto-num">P1</span><span class="puesto-estado">💻</span></div>
+            </div>
+          </div>
+
+          <!-- CENTRO -->
+          <div class="col-centro">
+
+            <div class="mesa-container">
+              <div class="mesa-fila-top">
+                <div class="mesa-puesto" id="espacio-12" onclick="reservar(12)"><span class="puesto-num">M2</span></div>
+              </div>
+              <div class="mesa-fila-mid">
+                <div class="mesa-lateral">
+                  <div class="mesa-puesto" id="espacio-13" onclick="reservar(13)"><span class="puesto-num">M3</span></div>
+                  <div class="mesa-puesto" id="espacio-14" onclick="reservar(14)"><span class="puesto-num">M4</span></div>
+                </div>
+                <div class="mesa-cuerpo">Mesa</div>
+                <div class="mesa-lateral">
+                  <div class="mesa-puesto" id="espacio-15" onclick="reservar(15)"><span class="puesto-num">M5</span></div>
+                  <div class="mesa-puesto" id="espacio-16" onclick="reservar(16)"><span class="puesto-num">M6</span></div>
+                </div>
+              </div>
+              <div class="mesa-fila-bot">
+                <div class="mesa-puesto" id="espacio-11" onclick="reservar(11)"><span class="puesto-num">M1</span></div>
+              </div>
+            </div>
+
+            <!-- ZONA DESCANSO -->
+            <div class="zona-descanso">
+              <div class="zona-titulo">☕ Zona de Descanso</div>
+              <div class="zona-desc">Abierta al público · No reservable</div>
+              <div class="sofas">
+                <div class="sofa sofa-vertical">Sofá 1</div>
+                <div class="sofa sofa-horizontal">Sofá 2</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- VENTANAL LATERAL DERECHO -->
+          <div class="ventanal-lateral">🪟 Ventanal Lateral</div>
+
+        </div>
+
+        <!-- ENTRADA -->
+        <div class="entrada-wrap">
+          <div class="entrada-label">🚪 Entrada</div>
+        </div>
+
+        <!-- PASILLO EXTERNO -->
+        <div class="pasillo-externo">🚶 Pasillo Externo</div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Reservas del día -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📋 Reservas del día</span>
+      <span class="badge badge-slate" id="contadorReservas">0 reservas</span>
+    </div>
+    <div class="card-body" id="listaReservas">
+      <div class="empty-state">
+        <div class="icon">📅</div>
+        <p>Selecciona una fecha para ver las reservas</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Modal confirmación -->
+<div id="modalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center">
+  <div class="card" style="max-width:400px;width:90%;margin:auto">
+    <div class="card-header"><span class="card-title">✅ Confirmar reserva</span></div>
+    <div class="card-body">
+      <p id="modalTexto" style="color:var(--slate-700);font-size:.9rem;margin-bottom:20px"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btnConfirmar">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── Toast ───────────────────────────────────────────────── */
+function showToast(msg, type = 'info', duration = 4000) {
+  const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'fadeOut .3s forwards';
+    setTimeout(() => t.remove(), 300);
+  }, duration);
+}
+
+/* ─── Nombre espacio ──────────────────────────────────────── */
+function getNombre(espacio) {
+  if (espacio <= 9) return `Puesto ${espacio}`;
+  const m = { 11:'Mesa M1', 12:'Mesa M2', 13:'Mesa M3', 14:'Mesa M4', 15:'Mesa M5', 16:'Mesa M6' };
+  return m[espacio] || `Espacio ${espacio}`;
+}
+
+/* ─── Sesión ──────────────────────────────────────────────── */
+let sesionUsuario = null;
+
+fetch('/sesion')
+  .then(res => res.json())
+  .then(data => {
+    if (!data.activa) { window.location.href = 'login.html'; return; }
+    sesionUsuario = data.usuario;
+    const nombre = data.usuario.nombre;
+    document.getElementById('nombreUsuario').textContent = nombre;
+    document.getElementById('userInitial').textContent = nombre.charAt(0).toUpperCase();
+
+    // Bloquear fechas pasadas: el calendario no mostrará días anteriores a hoy
+    const hoy = new Date().toISOString().split('T')[0];
+    const inputFecha = document.getElementById('fecha');
+    inputFecha.min   = hoy;
+    inputFecha.value = hoy;
+    actualizarMapa();
+  });
+
+/* ─── Logout ──────────────────────────────────────────────── */
+function logout() {
+  fetch('/logout', { method: 'POST' })
+    .then(() => window.location.href = 'login.html');
+}
+
+/* ─── Actualizar mapa ─────────────────────────────────────── */
+function actualizarMapa() {
+  let fecha = document.getElementById('fecha').value;
+  const hora = document.getElementById('hora').value;
+  if (!fecha) return;
+
+  const hoy = new Date().toISOString().split('T')[0];
+
+  // Si alguien escribe a mano una fecha pasada, corregir a hoy automáticamente
+  if (fecha < hoy) {
+    document.getElementById('fecha').value = hoy;
+    fecha = hoy;
+    showToast('Se ajustó la fecha al día de hoy', 'info', 2500);
+  }
+
+  document.getElementById('alertaFecha').style.display = 'none';
+
+  fetch('/reservas/' + fecha)
+    .then(res => res.json())
+    .then(reservas => {
+
+      // Resetear todos los espacios
+      for (let i = 1; i <= 16; i++) {
+        const el = document.getElementById('espacio-' + i);
+        if (el) { el.classList.remove('ocupado'); el.classList.add('libre'); }
+      }
+
+      // Marcar ocupados según hora seleccionada
+      reservas.forEach(r => {
+        if (hora >= r.hora_inicio && hora < r.hora_fin) {
+          const el = document.getElementById('espacio-' + r.espacio);
+          if (el) { el.classList.remove('libre'); el.classList.add('ocupado'); }
+        }
+      });
+
+      // Stats
+      const totalEspacios = 15;
+      const ocupados = document.querySelectorAll('.ocupado').length;
+      document.getElementById('statLibres').textContent      = totalEspacios - ocupados;
+      document.getElementById('statOcupados').textContent    = ocupados;
+      document.getElementById('statMisReservas').textContent =
+        reservas.filter(r => sesionUsuario && r.documento === sesionUsuario.documento).length;
+      document.getElementById('statsStrip').style.display    = 'grid';
+
+      verReservas(reservas);
+    });
+}
+
+/* ─── Reservar ────────────────────────────────────────────── */
+let pendingEspacio = null;
+
+function reservar(espacio) {
+  const fecha = document.getElementById('fecha').value;
+  const hora  = document.getElementById('hora').value;
+  const hoy   = new Date().toISOString().split('T')[0];
+
+  if (!fecha) { showToast('Selecciona una fecha primero', 'warning'); return; }
+
+  // Bloqueo 1: fecha pasada en el cliente
+  if (fecha < hoy) {
+    showToast('No puedes reservar en fechas pasadas', 'warning');
+    document.getElementById('fecha').value = hoy;
+    actualizarMapa();
+    return;
+  }
+
+  const el = document.getElementById('espacio-' + espacio);
+  if (el && el.classList.contains('ocupado')) {
+    showToast('Este espacio ya está ocupado a esa hora', 'warning'); return;
+  }
+
+  pendingEspacio = espacio;
+  document.getElementById('modalTexto').textContent =
+    `¿Reservar ${getNombre(espacio)} el ${fecha} a las ${hora}? (Duración: 90 min)`;
+  document.getElementById('modalOverlay').style.display = 'flex';
+}
+
+document.getElementById('btnConfirmar').onclick = function() {
+  if (!pendingEspacio) return;
+  const fecha = document.getElementById('fecha').value;
+  const hora  = document.getElementById('hora').value;
+  const hoy   = new Date().toISOString().split('T')[0];
+
+  // Bloqueo 2: verificar de nuevo justo antes de enviar
+  if (fecha < hoy) {
+    showToast('No puedes reservar en fechas pasadas', 'warning');
+    cerrarModal();
+    return;
+  }
+
+  cerrarModal();
+
+  fetch('/reservar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ espacio: pendingEspacio, fecha, hora_inicio: hora })
+  })
+  .then(res => res.json())
+  .then(data => {
+    showToast(data.mensaje, data.error ? 'error' : 'success');
+    actualizarMapa();
+  })
+  .catch(() => showToast('Error de conexión', 'error'));
+};
+
+function cerrarModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+  pendingEspacio = null;
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+
+/* ─── Ver reservas del día ────────────────────────────────── */
+function verReservas(reservas) {
+  if (!reservas) {
+    const fecha = document.getElementById('fecha').value;
+    if (!fecha) return;
+    fetch('/reservas/' + fecha)
+      .then(res => res.json())
+      .then(data => verReservas(data));
+    return;
+  }
+
+  const container = document.getElementById('listaReservas');
+  const contador  = document.getElementById('contadorReservas');
+
+  if (reservas.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🟢</div>
+        <p>No hay reservas este día. Todos los espacios están disponibles.</p>
+      </div>`;
+    contador.textContent = '0 reservas';
+    return;
+  }
+
+  contador.textContent = reservas.length + (reservas.length === 1 ? ' reserva' : ' reservas');
+
+  container.innerHTML = reservas.map(r => {
+    const esMia = sesionUsuario && r.documento === sesionUsuario.documento;
+    return `
+    <div class="reserva-card">
+      <div class="reserva-meta">
+        <div class="reserva-title">
+          ${getNombre(r.espacio)}
+          ${esMia ? '<span class="badge badge-blue" style="font-size:.65rem;margin-left:6px">Mi reserva</span>' : ''}
+        </div>
+        <div class="reserva-detail">
+          <span>👤 ${r.usuario}</span>
+          <span>🕐 ${r.hora_inicio} – ${r.hora_fin}</span>
+          <span>🪪 CC: ${r.documento}</span>
+        </div>
+      </div>
+      ${esMia ? `<button class="btn btn-danger btn-sm" onclick="cancelar(${r.id})">Cancelar</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+/* ─── Cancelar ────────────────────────────────────────────── */
+function cancelar(id) {
+  if (!confirm('¿Cancelar esta reserva?')) return;
+  fetch('/cancelar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  })
+  .then(res => res.json())
+  .then(data => {
+    showToast(data.mensaje, data.error ? 'error' : 'success');
+    actualizarMapa();
+  });
+}
+</script>
+</body>
+</html>

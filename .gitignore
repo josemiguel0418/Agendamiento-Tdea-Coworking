@@ -1,0 +1,16 @@
+# Dependencias
+node_modules/
+
+# Base de datos (se crea automáticamente)
+database.db
+
+# Variables de entorno
+.env
+
+# Scripts de utilidad
+borrar.js
+script.js
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db

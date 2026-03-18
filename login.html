@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TdeA Coworking · Ingresar</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- Panel izquierdo decorativo -->
+  <div class="auth-left">
+    <div>
+      <div class="auth-brand-name">TdeA</div>
+      <div class="auth-brand-sub">Institución Universitaria</div>
+    </div>
+
+    <div>
+      <p class="auth-tagline">Tu espacio para<br><strong>trabajar, conectar<br>y crear.</strong></p>
+    </div>
+
+    <div class="auth-features">
+      <div class="auth-feature">
+        <div class="auth-feature-dot"></div>
+        <span>Reserva puestos y mesas en segundos</span>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-dot"></div>
+        <span>Visualiza disponibilidad en tiempo real</span>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-dot"></div>
+        <span>Confirmación automática por correo</span>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-dot"></div>
+        <span>Acceso desde cualquier dispositivo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel derecho: formulario -->
+  <div class="auth-right">
+    <div class="auth-form-wrap">
+
+      <!-- Login -->
+      <div id="boxLogin">
+        <h1 class="auth-form-title">Bienvenido de vuelta</h1>
+        <p class="auth-form-sub">Ingresa tus credenciales para continuar</p>
+
+        <div class="auth-form" id="formLogin">
+          <div class="form-group">
+            <label class="form-label">Número de documento</label>
+            <input class="form-control" type="text" id="loginDocumento" placeholder="Ej: 1234567890" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <input class="form-control" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+          </div>
+
+          <div id="loginError" class="alert alert-warning" style="display:none">
+            <span>⚠️</span>
+            <span id="loginErrorMsg"></span>
+          </div>
+
+          <button class="btn btn-primary btn-full btn-lg" id="btnLogin">
+            Ingresar al sistema
+          </button>
+        </div>
+
+        <p class="auth-switch">¿No tienes cuenta? <a href="#" id="linkRegistro">Crear cuenta</a></p>
+        <p class="auth-switch" style="margin-top:8px"><a href="#" id="linkRecuperar">¿Olvidaste tu contraseña?</a></p>
+      </div>
+
+      <!-- Registro -->
+      <div id="boxRegistro" style="display:none">
+        <h1 class="auth-form-title">Crear cuenta</h1>
+        <p class="auth-form-sub">Completa los datos para registrarte</p>
+
+        <div class="auth-form">
+          <div class="form-group">
+            <label class="form-label">Nombre completo</label>
+            <input class="form-control" type="text" id="regNombre" placeholder="Ej: Ana García" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Correo institucional</label>
+            <input class="form-control" type="email" id="regEmail" placeholder="usuario@tdea.edu.co" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Número de documento</label>
+            <input class="form-control" type="text" id="regDocumento" placeholder="Ej: 1234567890">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <input class="form-control" type="password" id="regPassword" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+          </div>
+
+          <div id="regError" class="alert alert-warning" style="display:none">
+            <span>⚠️</span>
+            <span id="regErrorMsg"></span>
+          </div>
+
+          <button class="btn btn-primary btn-full btn-lg" id="btnRegistro">
+            Crear cuenta
+          </button>
+        </div>
+
+        <p class="auth-switch">¿Ya tienes cuenta? <a href="#" id="linkLogin">Iniciar sesión</a></p>
+      </div>
+
+      <!-- Recuperar contraseña -->
+      <div id="boxRecuperar" style="display:none">
+        <h1 class="auth-form-title">Recuperar contraseña</h1>
+        <p class="auth-form-sub">Ingresa tu correo institucional y te enviaremos un enlace de restablecimiento.</p>
+
+        <div class="auth-form">
+          <div class="form-group">
+            <label class="form-label">Correo institucional</label>
+            <input class="form-control" type="email" id="recEmail" placeholder="usuario@tdea.edu.co">
+          </div>
+
+          <div id="recMsg" class="alert alert-info" style="display:none">
+            <span>📨</span>
+            <span id="recMsgText"></span>
+          </div>
+
+          <button class="btn btn-primary btn-full btn-lg" id="btnRecuperar">
+            Enviar enlace
+          </button>
+        </div>
+
+        <p class="auth-switch"><a href="#" id="linkLoginRec">← Volver al inicio de sesión</a></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+function showToast(msg, type = 'info', duration = 4000) {
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'fadeOut .3s forwards';
+    setTimeout(() => t.remove(), 300);
+  }, duration);
+}
+
+function show(id) {
+  ['boxLogin','boxRegistro','boxRecuperar'].forEach(b => {
+    document.getElementById(b).style.display = b === id ? 'block' : 'none';
+  });
+}
+
+window.onload = function() {
+
+  // Enter key support
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btnLogin').click();
+  });
+
+  document.getElementById('btnLogin').onclick = function() {
+    const documento = document.getElementById('loginDocumento').value.trim();
+    const password  = document.getElementById('loginPassword').value;
+    const errEl     = document.getElementById('loginError');
+    const errMsg    = document.getElementById('loginErrorMsg');
+    errEl.style.display = 'none';
+
+    if (!documento || !password) {
+      errEl.style.display = 'flex';
+      errMsg.textContent = 'Ingresa tu documento y contraseña.';
+      return;
+    }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Ingresando…';
+
+    fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documento, password })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.mensaje === 'ok') {
+        showToast('Bienvenido, ' + data.nombre, 'success', 1500);
+        setTimeout(() => {
+          window.location.href = data.rol === 'admin' ? '/admin.html' : '/index.html';
+        }, 800);
+      } else {
+        errEl.style.display = 'flex';
+        errMsg.textContent = data.mensaje;
+        btn.disabled = false;
+        btn.textContent = 'Ingresar al sistema';
+      }
+    })
+    .catch(() => {
+      errEl.style.display = 'flex';
+      errMsg.textContent = 'Error de conexión. Intenta de nuevo.';
+      btn.disabled = false;
+      btn.textContent = 'Ingresar al sistema';
+    });
+  };
+
+  document.getElementById('btnRegistro').onclick = function() {
+    const nombre    = document.getElementById('regNombre').value.trim();
+    const email     = document.getElementById('regEmail').value.trim();
+    const documento = document.getElementById('regDocumento').value.trim();
+    const password  = document.getElementById('regPassword').value;
+    const errEl     = document.getElementById('regError');
+    const errMsg    = document.getElementById('regErrorMsg');
+    errEl.style.display = 'none';
+
+    if (!nombre || !documento || !password) {
+      errEl.style.display = 'flex'; errMsg.textContent = 'Completa todos los campos.'; return;
+    }
+    if (password.length < 8) {
+      errEl.style.display = 'flex'; errMsg.textContent = 'La contraseña debe tener al menos 8 caracteres.'; return;
+    }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Creando cuenta…';
+
+    fetch('/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, email, documento, password })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.mensaje === 'Cuenta creada correctamente') {
+        showToast('Cuenta creada. Ya puedes iniciar sesión.', 'success');
+        show('boxLogin');
+      } else {
+        errEl.style.display = 'flex';
+        errMsg.textContent = data.mensaje;
+      }
+      btn.disabled = false;
+      btn.textContent = 'Crear cuenta';
+    })
+    .catch(() => {
+      errEl.style.display = 'flex'; errMsg.textContent = 'Error de conexión.';
+      btn.disabled = false; btn.textContent = 'Crear cuenta';
+    });
+  };
+
+  document.getElementById('btnRecuperar').onclick = function() {
+    const email = document.getElementById('recEmail').value.trim();
+    if (!email) return;
+    const msgEl = document.getElementById('recMsg');
+    const msgTxt = document.getElementById('recMsgText');
+
+    fetch('/recuperar-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    })
+    .then(r => r.json())
+    .then(data => {
+      msgEl.style.display = 'flex';
+      msgTxt.textContent = data.mensaje || 'Si el correo existe, recibirás un enlace en breve.';
+    })
+    .catch(() => {
+      msgEl.style.display = 'flex';
+      msgTxt.textContent = 'Si el correo existe, recibirás un enlace en breve.';
+    });
+  };
+
+  document.getElementById('linkRegistro').onclick  = e => { e.preventDefault(); show('boxRegistro'); };
+  document.getElementById('linkLogin').onclick      = e => { e.preventDefault(); show('boxLogin'); };
+  document.getElementById('linkRecuperar').onclick  = e => { e.preventDefault(); show('boxRecuperar'); };
+  document.getElementById('linkLoginRec').onclick   = e => { e.preventDefault(); show('boxLogin'); };
+};
+</script>
+</body>
+</html>

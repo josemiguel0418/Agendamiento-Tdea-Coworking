@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TdeA Coworking · Admin</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="page-wrap">
+<div class="container">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-badge">
+        <span class="brand-name">TdeA</span>
+        <span class="brand-sub">Institución Universitaria</span>
+      </div>
+      <span class="badge badge-amber">Panel Admin</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-avatar" id="adminInitial">A</div>
+        <span id="nombreAdmin">Administrador</span>
+      </div>
+      <button class="btn btn-blue btn-sm" onclick="exportar()">📥 Exportar Excel</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- Stats dashboard -->
+  <div class="stats-strip" id="statsDash">
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">–</div>
+      <div class="stat-label">Reservas totales</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statHoy">–</div>
+      <div class="stat-label">Reservas hoy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statUsuarios">–</div>
+      <div class="stat-label">Usuarios registrados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statEspacioTop">–</div>
+      <div class="stat-label">Espacio más reservado</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" id="tabBtnReservas" onclick="mostrarTab('reservas', this)">📋 Reservas</button>
+    <button class="tab-btn" id="tabBtnUsuarios" onclick="mostrarTab('usuarios', this)">👥 Usuarios</button>
+  </div>
+
+  <!-- Tab: Reservas -->
+  <div id="tabReservas">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📋 Todas las reservas</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-control" type="date" id="filtroFecha" onchange="filtrarPorFecha()" style="width:auto">
+          <button class="btn btn-ghost btn-sm" onclick="cargarTodasReservas()">Ver todas</button>
+        </div>
+      </div>
+      <div class="card-body" id="listaReservasAdmin">
+        <div class="empty-state"><div class="icon">🔄</div><p>Cargando reservas…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Usuarios -->
+  <div id="tabUsuarios" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">👥 Usuarios registrados</span>
+        <span class="badge badge-slate" id="contadorUsuarios">–</span>
+      </div>
+      <div class="card-body" id="listaUsuarios">
+        <div class="empty-state"><div class="icon">🔄</div><p>Cargando usuarios…</p></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ─── Utilidades ──────────────────────────────────────────── */
+function showToast(msg, type = 'info', duration = 4000) {
+  const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.animation = 'fadeOut .3s forwards'; setTimeout(() => t.remove(), 300); }, duration);
+}
+
+function getNombre(espacio) {
+  if (espacio <= 9) return `Puesto P${espacio}`;
+  const m = { 11:'Mesa M1', 12:'Mesa M2', 13:'Mesa M3', 14:'Mesa M4', 15:'Mesa M5', 16:'Mesa M6' };
+  return m[espacio] || `Espacio ${espacio}`;
+}
+
+/* ─── Sesión ──────────────────────────────────────────────── */
+fetch('/sesion')
+  .then(r => r.json())
+  .then(data => {
+    if (!data.activa || data.usuario.rol !== 'admin') {
+      window.location.href = 'login.html'; return;
+    }
+    const nombre = data.usuario.nombre;
+    document.getElementById('nombreAdmin').textContent  = nombre;
+    document.getElementById('adminInitial').textContent = nombre.charAt(0).toUpperCase();
+    cargarTodasReservas();
+    cargarUsuarios();
+  });
+
+/* ─── Tabs ────────────────────────────────────────────────── */
+function mostrarTab(tab, btn) {
+  document.getElementById('tabReservas').style.display = tab === 'reservas' ? 'block' : 'none';
+  document.getElementById('tabUsuarios').style.display = tab === 'usuarios' ? 'block' : 'none';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ─── Reservas ────────────────────────────────────────────── */
+let todasLasReservas = [];
+
+function cargarTodasReservas() {
+  fetch('/admin/reservas')
+    .then(r => r.json())
+    .then(data => {
+      todasLasReservas = data;
+      actualizarStats(data);
+      renderReservasAdmin(data);
+    });
+}
+
+function filtrarPorFecha() {
+  const fecha = document.getElementById('filtroFecha').value;
+  if (!fecha) { renderReservasAdmin(todasLasReservas); return; }
+  renderReservasAdmin(todasLasReservas.filter(r => r.fecha === fecha));
+}
+
+function actualizarStats(reservas) {
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('statTotal').textContent = reservas.length;
+  document.getElementById('statHoy').textContent   = reservas.filter(r => r.fecha === hoy).length;
+
+  // Espacio más usado
+  const conteo = {};
+  reservas.forEach(r => { conteo[r.espacio] = (conteo[r.espacio]||0) + 1; });
+  const top = Object.entries(conteo).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('statEspacioTop').textContent = top ? getNombre(+top[0]) : '–';
+}
+
+function renderReservasAdmin(data) {
+  const container = document.getElementById('listaReservasAdmin');
+  if (!data || data.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No hay reservas registradas.</p></div>`;
+    return;
+  }
+
+  // Agrupar por fecha
+  const grupos = {};
+  data.forEach(r => { if (!grupos[r.fecha]) grupos[r.fecha] = []; grupos[r.fecha].push(r); });
+
+  let html = '';
+  Object.keys(grupos).sort().forEach(fecha => {
+    html += `<p class="section-label" style="margin-top:16px">${fecha}</p>`;
+    grupos[fecha].forEach(r => {
+      html += `
+      <div class="reserva-card">
+        <div class="reserva-meta">
+          <div class="reserva-title">${getNombre(r.espacio)}</div>
+          <div class="reserva-detail">
+            <span>👤 ${r.usuario}</span>
+            <span>🪪 CC: ${r.documento}</span>
+            <span>🕐 ${r.hora_inicio} – ${r.hora_fin}</span>
+          </div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="cancelar(${r.id})">Cancelar</button>
+      </div>`;
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+/* ─── Usuarios ────────────────────────────────────────────── */
+function cargarUsuarios() {
+  fetch('/admin/usuarios')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('statUsuarios').textContent = Array.isArray(data) ? data.length : '–';
+      document.getElementById('contadorUsuarios').textContent = Array.isArray(data) ? data.length + ' usuarios' : '–';
+
+      if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById('listaUsuarios').innerHTML =
+          `<div class="empty-state"><div class="icon">👥</div><p>No hay usuarios registrados.</p></div>`;
+        return;
+      }
+
+      document.getElementById('listaUsuarios').innerHTML = data.map(u => `
+      <div class="reserva-card">
+        <div class="reserva-meta">
+          <div class="reserva-title">
+            ${u.nombre}
+            <span class="badge ${u.rol === 'admin' ? 'badge-amber' : 'badge-green'}" style="margin-left:6px">
+              ${u.rol}
+            </span>
+          </div>
+          <div class="reserva-detail">
+            <span>🪪 CC: ${u.documento}</span>
+            ${u.email ? `<span>✉️ ${u.email}</span>` : ''}
+          </div>
+        </div>
+        ${u.rol !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${u.id})">Eliminar</button>` : ''}
+      </div>`).join('');
+    });
+}
+
+/* ─── Cancelar reserva ────────────────────────────────────── */
+function cancelar(id) {
+  if (!confirm('¿Cancelar esta reserva?')) return;
+  fetch('/cancelar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  })
+  .then(r => r.json())
+  .then(data => {
+    showToast(data.mensaje, data.error ? 'error' : 'success');
+    cargarTodasReservas();
+  });
+}
+
+/* ─── Eliminar usuario ────────────────────────────────────── */
+function eliminarUsuario(id) {
+  if (!confirm('¿Eliminar este usuario y todas sus reservas?')) return;
+  fetch('/admin/eliminar-usuario', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  })
+  .then(r => r.json())
+  .then(data => {
+    showToast(data.mensaje, data.error ? 'error' : 'success');
+    cargarUsuarios();
+    cargarTodasReservas();
+  });
+}
+
+/* ─── Exportar ────────────────────────────────────────────── */
+function exportar() {
+  fetch('/admin/exportar')
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'reservas_tdea.xlsx'; a.click();
+      URL.revokeObjectURL(url);
+      showToast('Archivo exportado correctamente', 'success');
+    })
+    .catch(() => showToast('Error al exportar', 'error'));
+}
+
+/* ─── Logout ──────────────────────────────────────────────── */
+function logout() {
+  fetch('/logout', { method: 'POST' }).then(() => window.location.href = 'login.html');
+}
+</script>
+</body>
+</html>
